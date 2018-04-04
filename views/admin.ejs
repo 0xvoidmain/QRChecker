@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script type="text/javascript" src="lib/jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/loading.css">
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+	<!-- Optional theme -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+	<script src="https://unpkg.com/vue/dist/vue.js"></script>
+	<style type="text/css">
+		.table-cell {
+			vertical-align: middle !important;
+			padding-left: 10px !important;
+		}
+	</style>
+	<title>CityMe</title>
+</head>
+
+<body>
+	<div id="app">
+		<nav class="navbar navbar-inverse navbar-static-top">
+				<div class="container-fluid">
+				<div class="navbar-header">
+					<a class="navbar-brand" href="/">
+						<span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+					</a>
+				</div>
+				<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+					<ul class="nav navbar-nav">
+						<li v-bind:class="{active: screen == '#history'}" v-on:click="tabClick('#history')">
+							<a href="#history">Lịch sử vào ra</a>
+						</li>
+						<li v-bind:class="{active: screen == '#employee'}" v-on:click="tabClick('#employee')">
+							<a href="#employee">Danh sách nhân viên</a>
+						</li>
+					</ul>
+				</div>
+				</div>
+		</nav>
+		<div v-if="!isLoading" class="container">
+			<div v-if="screen == '#history'">
+				<div style="height: 40px;">
+					<div style="float: right;">
+						<select v-model="selectMonth" class="form-control" style="width: 120px; display: inline-block;" v-on:change="changeDate()">
+							<option value="1">Tháng 1</option>
+							<option value="2">Tháng 2</option>
+							<option value="3">Tháng 3</option>
+							<option value="4">Tháng 4</option>
+							<option value="5">Tháng 5</option>
+							<option value="6">Tháng 6</option>
+							<option value="7">Tháng 7</option>
+							<option value="8">Tháng 8</option>
+							<option value="9">Tháng 9</option>
+							<option value="10">Tháng 10</option>
+							<option value="11">Tháng 11</option>
+							<option value="12">Tháng 12</option>
+						</select>
+						<select v-model="selectYear" class="form-control" style="width: 100px; display: inline-block;" v-on:change="changeDate()">
+							<option value="2016">2016</option>
+							<option value="2017">2017</option>
+						</select>
+					</div>
+				</div>
+				<table v-if="times && times.length > 0" class="table table-striped">
+					<thead>
+						<tr>
+							<th width="20%">Thời gian</th>
+							<th width="10%">ID</th>
+							<th>Tên</th>
+						</tr>
+					</thead>
+					<tbody>
+					<tr v-for="time in times" v-bind:class="{warning: time.isDate}">
+						<td>
+							<span v-if="time.isDate" class="label label-primary">
+								{{time.date}}
+							</span>
+							<span v-if="!time.isDate" class="label" style="margin-left: 30px" v-bind:class="{'label-success': time.type == 'in', 'label-danger': time.type != 'in'}">
+								{{new Date(time.checkTime).toLocaleTimeString()}}
+							</span>
+						</td>
+						<td><b>{{time.employee}}</b></td>
+						<td>{{time.name}}</td>
+					</tbody>
+				</table>
+
+				<div v-if="!times || times.length == 0" >
+					<div class="alert alert-danger" role="alert">Không có dữ liệu</div>
+				</div>
+			</div>
+
+			<div v-if="screen == '#employee'">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th width="7%">STT</th>
+							<th width="10%">HR Code</th>
+							<th width="10%">ID</th>
+							<th width="20%">Tên</th>
+							<th width="25%">Avatar</th>
+							<th></th>
+						</tr>
+					</thead>
+					<tbody>
+					<tr v-for="(empl, index) in employee">
+						<td class="table-cell">
+							{{index}}
+						</td>
+						<td class="table-cell"><span class="label label-success">{{empl.hrcode}}</span></td>
+						<td class="table-cell">{{empl.id}}</td>
+						<td class="table-cell">{{empl.name}}</td>
+						<td class="table-cell">
+							<img style="height: 60px;" class="media-object" v-bind:src="empl.avatar">
+						</td>
+						<td class="table-cell">
+							<button type="button" class="btn btn-primary" v-on:click="viewHistory(empl.id)">Xem lịch sử</button>
+							<button type="button" class="btn btn-danger" v-on:click="deleteEmployee(empl.id)">Xóa</button>
+						</td>
+					</tr>
+					<tr>
+						<td class="table-cell">
+							{{employee.length}}
+						</td>
+						<td class="table-cell" style="padding-left: 0 !important">
+							<span class="label label-danger">
+								Tạo tự động
+							</span>
+						</td>
+						<td class="table-cell" style="padding-left: 0 !important">
+							<input type="text" class="form-control" placeholder="Nhập ID" v-model="newEmployee.id">
+						</td>
+						<td class="table-cell" style="padding-left: 0 !important">
+							<input type="text" class="form-control" placeholder="Nhập Tên" v-model="newEmployee.name">
+						</td>
+						<td class="table-cell" style="padding-left: 0 !important">
+							<input type="text" class="form-control" placeholder="Nhập link ảnh" v-model="newEmployee.avatar">
+						</td>
+						<td class="table-cell">
+							<button type="button" class="btn btn-success" v-on:click="addEmployee()">Thêm mới</button>
+						</td>
+					</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog">
+			<div class="modal-dialog modal-sm" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title" id="myModalLabel">Thông báo</h4>
+					</div>
+					<div class="modal-body">
+						{{alert}}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="isLoading" class="cssload-thecube">
+			<div class="cssload-cube cssload-c1"></div>
+			<div class="cssload-cube cssload-c2"></div>
+			<div class="cssload-cube cssload-c4"></div>
+			<div class="cssload-cube cssload-c3"></div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript" src="admin.js"></script>
+</html>
